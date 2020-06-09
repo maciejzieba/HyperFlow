@@ -1,7 +1,7 @@
 # HyperFlow
 
 ## Base code
-As a base code for our implementation we used [PointFlow](https://arxiv.org/abs/1906.12320) published [at](https://github.com/stevenygd/PointFlow).
+As a base code for our implementation we used [PointFlow](https://arxiv.org/abs/1906.12320) published [here](https://github.com/stevenygd/PointFlow).
 
 ## Dependencies
 * Python 3.6
@@ -9,7 +9,6 @@ As a base code for our implementation we used [PointFlow](https://arxiv.org/abs/
 * G++ or GCC 5.
 * [PyTorch](http://pytorch.org/). Codes are tested with version 1.0.1
 * [torchdiffeq](https://github.com/rtqichen/torchdiffeq).
-* (Optional) [Tensorboard](https://www.tensorflow.org/) for visualization of the training process. 
 
 Following is the suggested way to install these dependencies: 
 ```bash
@@ -34,22 +33,14 @@ cd data
 unzip ShapeNetCore.v2.PC15k.zip
 ```
 
-Please contact us if you need point clouds for the ModelNet dataset.
-
 ## Training
 
-Example training scripts can be found in `scripts/` folder. 
+Example training script: 
 ```bash
-# Train auto-encoder (no latent CNF)
-./scripts/shapenet_airplane_ae.sh # Train with single GPU, about 7-8 GB GPU memory
-./scripts/shapenet_airplane_ae_dist.sh # Train with multiple GPUs
-
-# Train generative model
-./scripts/shapenet_airplane_gen.sh # Train with single GPU, about 7-8 GB GPU memory 
-./scripts/shapenet_airplane_gen_dist.sh # Train with multiple GPUs 
+.train.sh 
 ```
 
-## Pre-trained models and test
+## Pre-trained model and test
 
 Pretrained models can be downloaded from this [link](https://drive.google.com/file/d/1dcxjuuKiAXZxhiyWD_o_7Owx8Y3FbRHG/view?usp=sharing). 
 The following is the suggested way to evaluate the performance of the pre-trained models.
