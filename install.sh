@@ -3,7 +3,7 @@
 root=`pwd`
 
 # Install dependecies
-conda install numpy matplotlib pillow scipy tqdm imageio scikit-learn -y
+conda install numpy matplotlib pillow scipy tqdm imageio psutil scikit-learn -y
 pip install tensorflow-gpu==1.13.1
 pip install tensorboardX==1.7
 

@@ -172,8 +172,6 @@ def main_worker(gpu, save_dir, ngpus_per_node, args):
             latent_nats_avg_meter.update(prior_nats.item())
             if step % args.log_freq == 0:
                 duration = time.time() - start_time
-                if bidx > 0:
-                    epoch_duration = epoch_duration + duration
                 start_time = time.time()
                 print("[Rank %d] Epoch %d Batch [%2d/%2d] Time [%3.2fs] Entropy %2.5f LatentNats %2.5f PointNats %2.5f"
                       % (args.rank, epoch, bidx, len(train_loader), duration, entropy_avg_meter.avg,

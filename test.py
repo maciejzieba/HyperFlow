@@ -5,7 +5,7 @@ from metrics.evaluation_metrics import EMD_CD
 from metrics.evaluation_metrics import jsd_between_point_cloud_sets as JSD
 from metrics.evaluation_metrics import compute_all_metrics
 from collections import defaultdict
-from models.networks import PointFlow, VAEFlow, HyperVAEFlow
+from models.networks import HyperPointFlow
 import os
 import torch
 import numpy as np
@@ -105,7 +105,7 @@ def evaluate_gen(model, args):
         idx_b, te_pc = data['idx'], data['test_points']
         te_pc = te_pc.cuda() if args.gpu is None else te_pc.cuda(args.gpu)
         B, N = te_pc.size(0), te_pc.size(1)
-        _, out_pc = model.sample(B, N)
+        _, out_pc = model.sample(B, N, gpu=args.gpu)
 
         # denormalize
         m, s = data['mean'].float(), data['std'].float()
@@ -141,27 +141,19 @@ def evaluate_gen(model, args):
 
 
 def main(args):
-    model = HyperFlow(args)
-
-    def _transform_(m):
-        return nn.DataParallel(m)
-
+    model = HyperPointFlow(args)
     model = model.cuda()
-    model.multi_gpu_wrapper(_transform_)
-
     print("Resume Path:%s" % args.resume_checkpoint)
     checkpoint = torch.load(args.resume_checkpoint)
-    model.load_state_dict(checkpoint['model'])
+    model.load_state_dict(checkpoint)
     model.eval()
-
-    with torch.no_grad():
-        if args.evaluate_recon:
-            # Evaluate reconstruction
-            evaluate_recon(model, args)
-        else:
-            # Evaluate generation
+    vars = [0.01, 0.001, 0.0001, 0.0]
+    for var in vars:
+        print("Evaluating metrics for variance equal: %s" % var)
+        model.eval()
+        model.var = var
+        with torch.no_grad():
             evaluate_gen(model, args)
-    #evaluate_gen(None, args)
 
 
 if __name__ == '__main__':

@@ -1,10 +1,10 @@
 #! /bin/bash
 
 python train.py \
---log_name experiment_airplanes_flow_bigger_sphere_1_00001 \
+--log_name experiment_airplanes_flow_bigger_sphere_1_001 \
 --lr 2e-3 \
 --dataset_type shapenet15k \
---data_dir /home/datasets/ShapeNetCore.v2.PC15k \
+--data_dir data/ShapeNetCore.v2.PC15k \
 --cates airplane \
 --dims 64-16-64 \
 --hyper_dims 256-512-1024 \
@@ -14,8 +14,8 @@ python train.py \
 --batch_size 50 \
 --zdim 128 \
 --epochs 4000 \
---save_freq 50 \
---viz_freq 50 \
+--save_freq 1 \
+--viz_freq 1 \
 --log_freq 1 \
 --val_freq 6000 \
 --gpu 0 \

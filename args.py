@@ -163,6 +163,9 @@ def add_args(parser):
     parser.add_argument('--step_var', type=float, default=0.001,
                         help='Step with that variance for spherical distribution.')
 
+    parser.add_argument('--demo_mode', type=float, default=0.001,
+                        help='Experiment mode for demo file.')
+
     return parser
 
 

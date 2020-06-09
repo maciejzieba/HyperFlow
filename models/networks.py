@@ -259,29 +259,32 @@ class HyperPointFlow(nn.Module):
         else:
             return self.reparameterize_gaussian(z_mu, z_sigma)
 
-    def decode(self, z, num_points, truncate_std=None):
+    def decode(self, z, num_points, truncate_std=None, y=None):
         # transform points from the prior to a point cloud, conditioned on a shape code
         target_networks_weights = self.hyper(z)
-        if self.use_sphere_dist:
-            y = self.sample_lognormal((z.size(0), num_points, self.input_dim), self.gpu)
-        else:
-            y = self.sample_gaussian((z.size(0), num_points, self.input_dim), truncate_std, self.gpu)
+        if y is None:
+            if self.use_sphere_dist:
+                y = self.sample_lognormal((z.size(0), num_points, self.input_dim), self.gpu)
+            else:
+                y = self.sample_gaussian((z.size(0), num_points, self.input_dim), truncate_std, self.gpu)
         x = self.point_cnf(y, target_networks_weights, reverse=True).view(*y.size())
         return y, x
 
-    def sample(self, batch_size, num_points, truncate_std=None, truncate_std_latent=None, gpu=None):
+    def sample(self, batch_size, num_points, truncate_std=None, truncate_std_latent=None, gpu=None,
+               w=None, y=None):
         assert self.use_latent_flow, "Sampling requires `self.use_latent_flow` to be True."
         # Generate the shape code from the prior
-        w = self.sample_gaussian((batch_size, self.zdim), truncate_std_latent, gpu=gpu)
+        if w is None:
+            w = self.sample_gaussian((batch_size, self.zdim), truncate_std_latent, gpu=gpu).cuda()
         z = self.latent_cnf(w, None, reverse=True).view(*w.size())
         # Sample points conditioned on the shape code
-        _, x = self.decode(z, num_points, truncate_std)
+        _, x = self.decode(z, num_points, truncate_std, y=y)
         return z, x
 
-    def reconstruct(self, x, num_points=None, truncate_std=None):
+    def reconstruct(self, x, num_points=None, truncate_std=None, y=None):
         num_points = x.size(1) if num_points is None else num_points
         z = self.encode(x)
-        _, x = self.decode(z, num_points, truncate_std)
+        _, x = self.decode(z, num_points, truncate_std, y=y)
         return x
 
 

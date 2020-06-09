@@ -120,12 +120,12 @@ def get_point_cnf(args):
 
 def get_latent_cnf(args):
     dims = tuple(map(int, args.latent_dims.split("-")))
-    model = build_model(args, args.zdim, dims, 0, args.latent_num_blocks, False).cuda(1)
+    model = build_model(args, args.zdim, dims, 0, args.latent_num_blocks, False)
     print("Number of trainable parameters of Latent CNF: {}".format(count_parameters(model)))
     return model
 
 
 def get_hyper_cnf(args):
-    model = build_hyper(args, args.num_blocks, True).cuda(1)
+    model = build_hyper(args, args.num_blocks, True)
     return model
 
