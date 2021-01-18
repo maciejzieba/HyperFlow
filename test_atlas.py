@@ -6,11 +6,13 @@ from metrics.evaluation_metrics import jsd_between_point_cloud_sets as JSD
 from metrics.evaluation_metrics import compute_all_metrics
 from collections import defaultdict
 from models.networks import HyperPointFlow
+from models.atlas_networks import HyperNetwork, TargetNetwork
 import os
 import torch
 import numpy as np
 import torch.nn as nn
 
+from train_atlas import tile
 
 def get_test_loader(args):
     _, te_dataset = get_datasets(args)
@@ -25,7 +27,6 @@ def get_test_loader(args):
 
 
 def evaluate_recon(model, args):
-    # TODO: make this memory efficient
     if 'all' in args.cates:
         cates = list(synsetid_to_cate.values())
     else:
@@ -96,17 +97,33 @@ def evaluate_recon(model, args):
     save_path = os.path.join(save_dir, "results.npy")
     np.save(save_path, all_results)
 
+def get_squares(N):
+    sq = torch.Tensor([[0.0, 0.0],
+                       [0.0, 1.0],
+                       [1.0, 0.0],
+                       [1.0, 1.0]]).float().cuda()
+    sq = torch.cat(N*[sq])
+    return sq
 
-def evaluate_gen(model, args):
+
+def evaluate_gen(model, atlas, args):
     loader = get_test_loader(args)
     all_sample = []
     all_ref = []
-    for data in loader:
+    for idx, data in enumerate(loader):
+        #if idx < 1:
         idx_b, te_pc = data['idx'], data['test_points']
         te_pc = te_pc.cuda() if args.gpu is None else te_pc.cuda(args.gpu)
         B, N = te_pc.size(0), te_pc.size(1)
-        _, out_pc = model.sample(B, N, gpu=args.gpu)
-
+        z, out = model.sample(B, int(N/4), gpu=args.gpu)
+        target_networks_weights = atlas(z)
+        out_pc = torch.zeros((out.shape[0], 4*out.shape[1], out.shape[2])).cuda()
+        for j, target_network_weight in enumerate(target_networks_weights):
+            pc = out[j].detach()
+            atlas_input = get_squares(int(N/4))
+            x_temp = torch.cat([tile(pc, dim=0, n_tile=4), atlas_input], dim=1)
+            target_network = TargetNetwork(args.zdim, target_network_weight).cuda()
+            out_pc[j] = target_network(x_temp)
         # denormalize
         m, s = data['mean'].float(), data['std'].float()
         m = m.cuda() if args.gpu is None else m.cuda(args.gpu)
@@ -147,6 +164,11 @@ def main(args):
     checkpoint = torch.load(args.resume_checkpoint)
     model.load_state_dict(checkpoint)
     model.eval()
+    atlas = HyperNetwork(args)
+    atlas = atlas.cuda()
+    print("Resume Path:%s" % args.resume_atlas)
+    checkpoint = torch.load(args.resume_atlas)
+    atlas.load_state_dict(checkpoint['model'])
     # vars = [0.01, 0.001, 0.0001, 0.0]
     vars = [0.01]
     for var in vars:
@@ -154,7 +176,7 @@ def main(args):
         model.eval()
         model.var = var
         with torch.no_grad():
-            evaluate_gen(model, args)
+            evaluate_gen(model, atlas, args)
 
 
 if __name__ == '__main__':

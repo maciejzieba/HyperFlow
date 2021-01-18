@@ -1,17 +1,17 @@
 #! /bin/bash
 
 python train.py \
---log_name experiment_airplanes_flow_bigger_sphere_1_001 \
+--log_name experiment_airplanes_flow_bigger_sphere_1_001_test \
 --lr 2e-3 \
 --dataset_type shapenet15k \
---data_dir data/ShapeNetCore.v2.PC15k \
+--data_dir /home/maciej/PycharmProjects/PointFlow/data/ShapeNetCore.v2.PC15k \
 --cates airplane \
 --dims 64-16-64 \
 --hyper_dims 256-512-1024 \
 --latent_dims 256-256 \
 --num_blocks 1 \
 --latent_num_blocks 1 \
---batch_size 50 \
+--batch_size 16 \
 --zdim 128 \
 --epochs 4000 \
 --save_freq 1 \

@@ -278,6 +278,17 @@ class ShapeNet15kPointClouds(Uniform15KPC):
             input_dim=3)
 
 
+class ShapeNetEmbeddings(Dataset):
+    def __init__(self, root_dir):
+        self.train_points = np.load(os.path.join(root_dir, 'Shapenet_embeddings.npy'))
+
+    def __len__(self):
+        return len(self.train_points)
+
+    def __getitem__(self, idx):
+        return self.train_points[idx]
+
+
 def init_np_seed(worker_id):
     seed = torch.initial_seed()
     np.random.seed(seed % 4294967296)

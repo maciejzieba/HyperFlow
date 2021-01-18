@@ -125,6 +125,8 @@ def add_args(parser):
                         help='Path to the file storing the dataset mean.')
     parser.add_argument('--resume_dataset_std', type=str, default=None,
                         help='Path to the file storing the dataset std.')
+    parser.add_argument('--resume_atlas', type=str, default=None,
+                        help='Path to Atlas')
 
     # distributed training
     parser.add_argument('--world_size', default=1, type=int,
