@@ -45,7 +45,7 @@ def get_grid(grain=5):
 def get_data_viz(model, atlas, args):
     save_dir = os.path.dirname(args.resume_atlas)
     B = 10
-    N = 5000
+    N = 10000
     atlas_2d_points = 25
     grid = get_grid(5)
     z, out = model.sample(B, N, gpu=args.gpu)
@@ -100,7 +100,7 @@ def main(args):
     XX_T = out_pc[index]
     T = simplices
     from sklearn.cluster import KMeans
-    km = KMeans(n_clusters=1000).fit(X_r)
+    km = KMeans(n_clusters=500).fit(X_r)
     from sklearn.neighbors import NearestNeighbors
     neigh = NearestNeighbors(n_neighbors=1)
     neigh.fit(X_r, np.ones(len(X_r)))
@@ -116,15 +116,15 @@ def main(args):
     vis.create_window(width=600, height=600)
     for i in indexes:
         XX = XX_T[i]
-        #if ((np.sum(np.max(XX, 0) - np.min(XX, 0))) < 0.43) and ((np.sum(np.max(XX, 0) - np.min(XX, 0))) > 0.05):
-        mesh = o3d.geometry.TriangleMesh()
-        mesh.vertices = o3d.utility.Vector3dVector(XX)
-        mesh.triangles = o3d.utility.Vector3iVector(np.vstack((T, T_n)))
-        mesh.compute_vertex_normals()
-        R = mesh.get_rotation_matrix_from_xyz((np.pi / 120, -np.pi / 5, np.pi / 2.2))
-        mesh.rotate(R, center=(0, 0, 0))
-        vis.add_geometry(mesh)
-        vis.update_geometry(mesh)
+        if ((np.sum(np.max(XX, 0) - np.min(XX, 0))) < 0.43) and ((np.sum(np.max(XX, 0) - np.min(XX, 0))) > 0.05):
+            mesh = o3d.geometry.TriangleMesh()
+            mesh.vertices = o3d.utility.Vector3dVector(XX)
+            mesh.triangles = o3d.utility.Vector3iVector(np.vstack((T, T_n)))
+            mesh.compute_vertex_normals()
+            R = mesh.get_rotation_matrix_from_xyz((np.pi / 120, -np.pi / 5, np.pi / 2.2))
+            mesh.rotate(R, center=(0, 0, 0))
+            vis.add_geometry(mesh)
+            vis.update_geometry(mesh)
 
     vis.run()
     vis.poll_events()

@@ -76,10 +76,16 @@ def main(args):
             regularization_loss = []
             atlas_input = generate_points_from_uniform_distribution(size=(out.shape[1] * atlas_2d_points, 2),
                                                                     low=0, high=1, norm=False).cuda()
-            faces = torch.zeros(out.shape[1], 2 * atlas_2d_points - 2, out.shape[2])
+            faces = torch.zeros(out.shape[1], 2 * atlas_2d_points - 6, out.shape[2])
             for z, points in enumerate(atlas_input.reshape(out.shape[1], atlas_2d_points, 2)):
-                simplices = torch.from_numpy(Delaunay(points.cpu().numpy()).simplices)
-                faces[z, :simplices.shape[0]] = simplices
+                simplices = Delaunay(points.cpu().numpy()).simplices
+                # def swap_cols(arr, frm, to):
+                #     arr[:, [frm, to]] = arr[:, [to, frm]]
+                #
+                # T_n = np.array(simplices)
+                # swap_cols(T_n, 0, 2)
+                # simplices = np.vstack((simplices, T_n))
+                faces[z, :simplices.shape[0]] = torch.from_numpy(simplices + z*atlas_2d_points)
             for j, target_network_weight in enumerate(target_networks_weights):
                 clf = KNeighborsClassifier(atlas_2d_points + 1)
                 pc = out[j].detach()
@@ -92,17 +98,16 @@ def main(args):
                 x_temp2 = x_rec[j].reshape((pc.shape[0], atlas_2d_points, pc.shape[1]))
                 # Regularization
                 edges = torch.cat([faces[:, :, :2], faces[:, :, 1:], faces[:, :, (0, 2)]], 1).long()
-                regularization_loss.append( torch.sum(
-                        torch.norm(x_temp2[-1, edges[:, :, 0], :] - x_temp2[-1, edges[:, :, 1], :], dim=2),
-                        dim=1))
+                edges = edges.reshape(edges.shape[0]*edges.shape[1], edges.shape[2])
+                regularization_loss.append(torch.norm(x_rec[j][edges[:, 0], :] - x_rec[j][edges[:, 1], :],dim=1))
                 gt_points.append(x_rec_nearest_points)
                 gen_points.append(x_temp2)
             gt_points = torch.cat(gt_points, dim=0)
             gen_points = torch.cat(gen_points, dim=0)
+            loss_rec = reconstruction_loss(gt_points, gen_points)/(gt_points.shape[0]*2*atlas_2d_points)
             regularization_loss = torch.cat(regularization_loss, dim=0)
-            loss_rec = reconstruction_loss(gt_points, gen_points)/gt_points.shape[0]
             loss_reg = regularization_loss.mean()
-            loss = loss_rec + 0.1*loss_reg
+            loss = loss_rec + 0.01*loss_reg
             loss.backward(retain_graph=True)
             opt.step()
             duration = time.time() - start_time

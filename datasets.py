@@ -167,7 +167,7 @@ class Uniform15KPC(Dataset):
             'train_points': tr_out,
             'test_points': te_out,
             'mean': m, 'std': s, 'cate_idx': cate_idx,
-            'sid': sid, 'mid': mid
+            'sid': sid, 'mid': mid,
         }
 
 
@@ -279,8 +279,8 @@ class ShapeNet15kPointClouds(Uniform15KPC):
 
 
 class ShapeNetEmbeddings(Dataset):
-    def __init__(self, root_dir):
-        self.train_points = np.load(os.path.join(root_dir, 'Shapenet_embeddings.npy'))
+    def __init__(self, root_dir, split='train'):
+        self.train_points = np.load(os.path.join(root_dir, 'Shapenet_embeddings_' + str(split) + '.npy'))
 
     def __len__(self):
         return len(self.train_points)

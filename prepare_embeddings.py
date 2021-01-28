@@ -12,8 +12,11 @@ import numpy as np
 import torch.nn as nn
 
 
-def get_train_loader(args):
-    tr_dataset, _ = get_datasets(args)
+def get_loader(args, split):
+    if split=='train':
+        tr_dataset, _ = get_datasets(args)
+    else:
+        _, tr_dataset = get_datasets(args)
     if args.resume_dataset_mean is not None and args.resume_dataset_std is not None:
         mean = np.load(args.resume_dataset_mean)
         std = np.load(args.resume_dataset_std)
@@ -24,27 +27,29 @@ def get_train_loader(args):
     return loader
 
 
-def get_embeddings(model, args):
-    loader = get_train_loader(args)
+def get_embeddings(model, args, split='train'):
+    loader = get_loader(args, split)
     embeddings = []
     for data in loader:
-        idx_b, te_pc = data['idx'], data['train_points']
+        idx_b, te_pc, cat = data['idx'], data[split + '_points'], data['cate_idx']
         te_pc = te_pc.cuda() if args.gpu is None else te_pc.cuda(args.gpu)
         z = model.encode(te_pc).cpu().detach().numpy()
         embeddings.append(z)
     embeddings = np.concatenate(embeddings, axis=0)
     return embeddings
 
+
 def main(args):
     model = HyperPointFlow(args)
     model = model.cuda()
+    split = 'test'
     print("Resume Path:%s" % args.resume_checkpoint)
     checkpoint = torch.load(args.resume_checkpoint)
     model.load_state_dict(checkpoint)
     model.eval()
-    embeddings = get_embeddings(model, args)
+    embeddings = get_embeddings(model, args, split)
     save_dir = os.path.dirname(args.resume_checkpoint)
-    np.save(os.path.join(save_dir, "Shapenet_embeddings.npy"), embeddings)
+    np.save(os.path.join(save_dir, "Shapenet_embeddings_" + split + ".npy"), embeddings)
 
 
 if __name__ == '__main__':

@@ -105,6 +105,15 @@ def get_squares(N):
     sq = torch.cat(N*[sq])
     return sq
 
+def generate_points_from_uniform_distribution(size, low=-1, high=1, norm=True):
+    if norm:
+        while True:
+            points = torch.zeros([size[0] * 3, *size[1:]]).uniform_(low, high)
+            points = points[torch.norm(points, dim=1) < 1]
+            if points.shape[0] >= size[0]:
+                return points[:size[0]]
+    else:
+        return torch.zeros([size[0], *size[1:]]).uniform_(low, high)
 
 def evaluate_gen(model, atlas, args):
     loader = get_test_loader(args)
@@ -115,13 +124,16 @@ def evaluate_gen(model, atlas, args):
         idx_b, te_pc = data['idx'], data['test_points']
         te_pc = te_pc.cuda() if args.gpu is None else te_pc.cuda(args.gpu)
         B, N = te_pc.size(0), te_pc.size(1)
-        z, out = model.sample(B, int(N/4), gpu=args.gpu)
+        z, out = model.sample(B, N, gpu=args.gpu)
         target_networks_weights = atlas(z)
-        out_pc = torch.zeros((out.shape[0], 4*out.shape[1], out.shape[2])).cuda()
+        #out_pc = torch.zeros((out.shape[0], 4*out.shape[1], out.shape[2])).cuda()
+        out_pc = torch.zeros((out.shape[0], out.shape[1], out.shape[2])).cuda()
         for j, target_network_weight in enumerate(target_networks_weights):
             pc = out[j].detach()
-            atlas_input = get_squares(int(N/4))
-            x_temp = torch.cat([tile(pc, dim=0, n_tile=4), atlas_input], dim=1)
+            atlas_input = generate_points_from_uniform_distribution(size=(N, 2), low=0, high=1, norm=False).cuda()
+            x_temp = torch.cat([pc, atlas_input], dim=1)
+            #atlas_input = get_squares(int(N/4))
+            #x_temp = torch.cat([tile(pc, dim=0, n_tile=4), atlas_input], dim=1)
             target_network = TargetNetwork(args.zdim, target_network_weight).cuda()
             out_pc[j] = target_network(x_temp)
         # denormalize
