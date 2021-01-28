@@ -42,7 +42,8 @@ def main(args):
     model_path = os.path.join(os.path.dirname(args.resume_checkpoint), 'model')
     os.makedirs(model_path, exist_ok=True)
     model = HyperPointFlow(args)
-    model = model.cuda()
+    torch.cuda.set_device(args.gpu)
+    model.cuda(args.gpu)
     print("Resume Path:%s" % args.resume_checkpoint)
     checkpoint = torch.load(args.resume_checkpoint)
     model.load_state_dict(checkpoint)
@@ -57,7 +58,7 @@ def main(args):
     atlas_2d_points = 25
 
     atlas = HyperNetwork(args)
-    atlas = atlas.cuda()
+    atlas.cuda(args.gpu)
     opt = atlas.make_optimizer(args)
 
     reconstruction_loss = ChamferLoss().cuda()
